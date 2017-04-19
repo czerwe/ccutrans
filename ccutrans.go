@@ -25,6 +25,7 @@ type Options struct {
 	Mappingfile []string `short:"m" long:"mappingfile" default:"mapping.json" description:"Mapping file which provides serial/tag assigment"`
 	Influxdb    []string `short:"d" long:"database" default:"homeatic" description:"The database name"`
 	Loglevel    []string `long:"loglevel" default:"info" description:"loglevel" choice:"warn" choice:"info" choice:"debug"`
+	Version     []bool   `long:"version" short:"v" default:"info" description:"show version" choice:false`
 }
 
 type influxmessage struct {
@@ -45,8 +46,12 @@ var (
 	mappingTable map[string][]map[string]string
 	opts         Options
 	level        log.Level
-	version      string
+	version      string = "0.1.0"
 )
+
+func printVersion() {
+	fmt.Printf("v%v\n", version)
+}
 
 func newInfluxmessage(measurement string, tags map[string]string, fields map[string]interface{}) influxmessage {
 	// Creates an skeleton of an influxmessage
@@ -95,7 +100,7 @@ func readMappingFile(filename string) map[string][]map[string]string {
 
 func main() {
 
-	version = "v1.0.0"
+	// version = "v1.0.0"
 
 	_, err := flags.Parse(&opts)
 
@@ -103,6 +108,12 @@ func main() {
 		panic(err)
 		os.Exit(1)
 	}
+
+	fmt.Println(opts)
+
+	// if opts.Version[0] {
+	// 	printVersion()
+	// }
 
 	switch opts.Loglevel[0] {
 	case "info":
@@ -137,6 +148,16 @@ func main() {
 	log.Info("Initiating handlers")
 
 	r := mux.NewRouter()
+
+	r.NotFoundHandler = http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		log.WithFields(log.Fields{
+			"requestURI":  r.RequestURI,
+			"remoteAddr ": r.RemoteAddr,
+		}).Error("failed to find page")
+		// fmt.Println(r.RequestURI)
+		http.ServeFile(w, r, "public/index.html")
+	})
+
 	r.HandleFunc("/temperature/{sensortype:[A-Za-z\\-]+}.{serial:[A-Z0-9]+}:{channel:[0-9]}.{type:[A-Z]+}/{value}", KlimaHandler)
 
 	// r.HandleFunc("/kh/{serial:[A-Za-z0-9]+}.{type:[A-Za-z]+}/{value}", HistoryHandler).Methods("GET")
@@ -266,6 +287,7 @@ func sendToInflux(message influxmessage) {
 	c, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr: hosturl,
 	})
+	defer c.Close()
 
 	if err != nil {
 		requestLogger.Error(err)

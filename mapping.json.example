@@ -1,0 +1,44 @@
+{
+    "leq0122563": [
+        {
+            "name": "room",
+            "value": "dachgeschoss"
+        }
+    ],
+    "leq0099132": [
+        {
+            "name": "room",
+            "value": "draussen"
+        }
+    ],
+    "leq0121691": [
+        {
+            "name": "room",
+            "value": "wohnzimmer"
+        }
+    ],
+    "leq0867362": [
+        {
+            "name": "room",
+            "value": "hobbyraum"
+        }
+    ],
+    "leq0866781": [
+        {
+            "name": "room",
+            "value": "heizungsraum"
+        }
+    ],
+    "leq0539432": [
+        {
+            "name": "room",
+            "value": "trockner"
+        }
+    ],
+    "leq0538676": [
+        {
+            "name": "room",
+            "value": "waschmaschine"
+        }
+    ]
+}
