@@ -25,7 +25,7 @@ type Options struct {
 	Mappingfile []string `short:"m" long:"mappingfile" default:"mapping.json" description:"Mapping file which provides serial/tag assigment"`
 	Influxdb    []string `short:"d" long:"database" default:"homeatic" description:"The database name"`
 	Loglevel    []string `long:"loglevel" default:"info" description:"loglevel" choice:"warn" choice:"info" choice:"debug"`
-	Version     []bool   `long:"version" short:"v" default:"info" description:"show version" choice:false`
+	Version     []bool   `long:"version" short:"v" description:"show version"`
 }
 
 type influxmessage struct {
@@ -109,11 +109,10 @@ func main() {
 		os.Exit(1)
 	}
 
-	fmt.Println(opts)
-
-	// if opts.Version[0] {
-	// 	printVersion()
-	// }
+	if len(opts.Version) == 1 && opts.Version[0] {
+		printVersion()
+		os.Exit(0)
+	}
 
 	switch opts.Loglevel[0] {
 	case "info":
