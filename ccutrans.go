@@ -20,11 +20,11 @@ import (
 )
 
 type Options struct {
-	Influxhost  []string `short:"i" long:"host" required:"True" description:"Hostname or IP of Influxdb application"`
-	Influxport  []int    `short:"p" long:"port" default:"8086" description:"Port of Influxdb application"`
-	Mappingfile []string `short:"m" long:"mappingfile" default:"mapping.json" description:"Mapping file which provides serial/tag assigment"`
-	Influxdb    []string `short:"d" long:"database" default:"homeatic" description:"The database name"`
-	Loglevel    []string `long:"loglevel" default:"info" description:"loglevel" choice:"warn" choice:"info" choice:"debug"`
+	Influxhost  []string `short:"i" long:"host" env:"INFLUXHOST" required:"True" description:"Hostname or IP of Influxdb application"`
+	Influxport  []int    `short:"p" long:"port" env:"INFLUXPORT" default:"8086" description:"Port of Influxdb application"`
+	Mappingfile []string `short:"m" long:"mappingfile" env:"MAPPINGFILE" default:"mapping.json" description:"Mapping file which provides serial/tag assigment"`
+	Influxdb    []string `short:"d" long:"database" env:"INFLUXDB" default:"homeatic" description:"The database name"`
+	Loglevel    []string `long:"loglevel" env:"LOGLEVEL" default:"info" description:"loglevel" choice:"warn" choice:"info" choice:"debug"`
 	Version     []bool   `long:"version" short:"v" description:"show version"`
 }
 
@@ -46,7 +46,7 @@ var (
 	mappingTable map[string][]map[string]string
 	opts         Options
 	level        log.Level
-	version      string = "0.1.0"
+	version      string = "0.2.0"
 )
 
 func printVersion() {
