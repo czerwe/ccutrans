@@ -6,6 +6,7 @@
 package main
 
 import (
+	"ccutrans/ccuprocessing"
 	"encoding/json"
 	"fmt"
 	log "github.com/Sirupsen/logrus"
@@ -20,7 +21,8 @@ import (
 )
 
 type Options struct {
-	Influxhost  []string `short:"i" long:"host" env:"INFLUXHOST" required:"True" description:"Hostname or IP of Influxdb application"`
+	Listenport  []int    `long:"listenport" env:"LISTENPORT" default:"4040" description:"Listening port"`
+	Influxhost  []string `short:"i" long:"host" env:"INFLUXHOST" default:"localhost" description:"Hostname or IP of Influxdb application"`
 	Influxport  []int    `short:"p" long:"port" env:"INFLUXPORT" default:"8086" description:"Port of Influxdb application"`
 	Mappingfile []string `short:"m" long:"mappingfile" env:"MAPPINGFILE" default:"mapping.json" description:"Mapping file which provides serial/tag assigment"`
 	Influxdb    []string `short:"d" long:"database" env:"INFLUXDB" default:"homeatic" description:"The database name"`
@@ -46,7 +48,7 @@ var (
 	mappingTable map[string][]map[string]string
 	opts         Options
 	level        log.Level
-	version      string = "0.2.0"
+	version      string = "0.3.0"
 )
 
 func printVersion() {
@@ -159,38 +161,41 @@ func main() {
 
 	r.HandleFunc("/temperature/{sensortype:[A-Za-z\\-]+}.{serial:[A-Z0-9]+}:{channel:[0-9]}.{type:[A-Z]+}/{value}", KlimaHandler)
 
+	r.HandleFunc("/query/{measurement:[A-Za-z]+}/{room:[A-Za-z]+}", ccuprocessing.QueryHandler)
+
 	// r.HandleFunc("/kh/{serial:[A-Za-z0-9]+}.{type:[A-Za-z]+}/{value}", HistoryHandler).Methods("GET")
-	r.HandleFunc("/status", Status)
+	// r.HandleFunc("/status", Status)
 
 	log.Info("starting channel sender")
 	go channelSend()
 
 	log.WithFields(log.Fields{
-		"port": 4040,
+		"port": opts.Listenport[0],
 		"host": "0.0.0.0",
 	}).Info("starting listender")
-	http.ListenAndServe("0.0.0.0:4040", r)
+
+	http.ListenAndServe(fmt.Sprintf("0.0.0.0:%v", opts.Listenport[0]), r)
 
 }
 
-type status struct {
-	running bool `json:"running"`
-}
+// type status struct {
+// 	running bool `json:"running"`
+// }
+//
+// func Status(resp http.ResponseWriter, req *http.Request) {
+// 	var retVal status
+// 	retVal = status{running: true}
 
-func Status(resp http.ResponseWriter, req *http.Request) {
-	var retVal status
-	retVal = status{running: true}
+// 	statusString, err := json.Marshal(retVal)
 
-	statusString, err := json.Marshal(retVal)
+// 	fmt.Println(statusString)
 
-	fmt.Println(statusString)
+// 	if err != nil {
+// 		panic(err)
+// 	}
 
-	if err != nil {
-		panic(err)
-	}
-
-	fmt.Fprint(resp, statusString)
-}
+// 	fmt.Fprint(resp, statusString)
+// }
 
 func KlimaHandler(resp http.ResponseWriter, req *http.Request) {
 	vars := mux.Vars(req)
@@ -257,8 +262,6 @@ func channelSend() {
 }
 
 func sendToInflux(message influxmessage) {
-	// var tryCount int
-	// time.Sleep(time.Second * 3)
 
 	fields := log.Fields{}
 
@@ -279,9 +282,6 @@ func sendToInflux(message influxmessage) {
 	requestLogger.Debug("Metric recieved")
 
 	hosturl := fmt.Sprintf("http://%v:%v", opts.Influxhost[0], opts.Influxport[0])
-
-	// var count int = 2
-	// var c client.client
 
 	c, err := client.NewHTTPClient(client.HTTPConfig{
 		Addr: hosturl,
